@@ -1,0 +1,116 @@
+name: 一键修改先天属性上限为999（安全版）
+
+on:
+  workflow_dispatch: # 仅支持在 GitHub Actions 页面手动点击触发
+
+jobs:
+  patch-attribute-limit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 检出仓库代码
+        uses: actions/checkout@v4
+
+      - name: 执行精准限定修改
+        run: |
+          node - << 'EOF'
+          const fs = require('fs');
+
+          // 安全替换函数：仅在文件存在且匹配成功时才替换
+          function safeReplace(file, regex, replacement, name) {
+            if (!fs.existsSync(file)) {
+              console.log(`[跳过] 文件不存在: ${file}`);
+              return;
+            }
+            const content = fs.readFileSync(file, 'utf8');
+            if (!regex.test(content)) {
+              console.log(`[未匹配] ${file} (${name})`);
+              return;
+            }
+            const updated = content.replace(regex, replacement);
+            fs.writeFileSync(file, updated, 'utf8');
+            console.log(`[成功] 已精确修改: ${file} (${name})`);
+          }
+
+          // 1. sixSiManager.ts：精准修改先天六司对象块，不触碰后天六司
+          safeReplace(
+            'src/utils/sixSiManager.ts',
+            /(先天六司:\s*\{\s*每项上限:\s*)\d+(,\s*总分上限:\s*)\d+/,
+            '$1999$25994',
+            '先天六司上下限'
+          );
+          safeReplace(
+            'src/utils/sixSiManager.ts',
+            /(INNATE_SIX_SI_RANGE\s*=\s*\{[\s\S]*?maxValue:\s*)\d+/,
+            '$1999',
+            '修炼速度计算上限'
+          );
+
+          // 2. dataRepair.ts：只修改针对先天六司 6 项属性的校验范围，其他属性不碰
+          safeReplace(
+            'src/utils/dataRepair.ts',
+            /validateNumber\(attrs\.(根骨|灵性|悟性|气运|魅力|心性),\s*0,\s*\d+,\s*5\)/g,
+            'validateNumber(attrs.$1, 0, 999, 5)',
+            '先天六司读档清洗上限'
+          );
+
+          // 3. characterInitialization.ts：只改开局配置里的先天六司上限
+          safeReplace(
+            'src/services/characterInitialization.ts',
+            /(先天六司:\s*\{\s*每项上限:\s*)\d+(\s*\})/,
+            '$1999$2',
+            '开局模板先天上限'
+          );
+
+          // 4. offlineInitialization.ts：只改离线开局模板里的先天六司上限
+          safeReplace(
+            'src/services/initialization/offlineInitialization.ts',
+            /(先天六司:\s*\{\s*每项上限:\s*)\d+(\s*\})/,
+            '$1999$2',
+            '离线开局模板先天上限'
+          );
+
+          // 5. Step6 组件：只修改该组件里的最大值
+          safeReplace(
+            'src/components/character-creation/Step6_AttributeAllocation.vue',
+            /:max="10"/g,
+            ':max="999"',
+            '组件输入框/滑块最大值'
+          );
+          safeReplace(
+            'src/components/character-creation/Step6_AttributeAllocation.vue',
+            />=\s*10\b/g,
+            '>= 999',
+            '组件加号按钮限制'
+          );
+
+          // 6. 业务提示词：修改 AI 对先天六司的区间认知
+          safeReplace(
+            'src/utils/prompts/definitions/businessRules.ts',
+            /先天六司\(0-\d+\)/g,
+            '先天六司(0-999)',
+            '业务提示词区间'
+          );
+          safeReplace(
+            'src/utils/prompts/definitions/dataDefinitions.ts',
+            /(\[先天六司:[^\]]*?\[1-)\d+(,加成占70%\])/g,
+            '$1999$2',
+            '数据结构定义提示词'
+          );
+
+          EOF
+
+      - name: 仅提交指定的白名单文件
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: 将先天六司上限精确调整至 999"
+          # 核心防线：这里明确列出允许提交的文件列表，不在列表里的任何文件直接忽略！
+          file_pattern: >-
+            src/utils/sixSiManager.ts
+            src/utils/dataRepair.ts
+            src/services/characterInitialization.ts
+            src/services/initialization/offlineInitialization.ts
+            src/components/character-creation/Step6_AttributeAllocation.vue
+            src/utils/prompts/definitions/businessRules.ts
+            src/utils/prompts/definitions/dataDefinitions.ts
