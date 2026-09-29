@@ -61,12 +61,12 @@ export function repairSaveData(saveData: SaveData | null | undefined): SaveData 
       repaired.角色.身份.先天六司 = { 根骨: 5, 灵性: 5, 悟性: 5, 气运: 5, 魅力: 5, 心性: 5 };
     } else {
       const attrs = repaired.角色.身份.先天六司;
-      attrs.根骨 = validateNumber(attrs.根骨, 0, 10, 5);
-      attrs.灵性 = validateNumber(attrs.灵性, 0, 10, 5);
-      attrs.悟性 = validateNumber(attrs.悟性, 0, 10, 5);
-      attrs.气运 = validateNumber(attrs.气运, 0, 10, 5);
-      attrs.魅力 = validateNumber(attrs.魅力, 0, 10, 5);
-      attrs.心性 = validateNumber(attrs.心性, 0, 10, 5);
+      attrs.根骨 = validateNumber(attrs.根骨, 0, 999, 5);
+      attrs.灵性 = validateNumber(attrs.灵性, 0, 999, 5);
+      attrs.悟性 = validateNumber(attrs.悟性, 0, 999, 5);
+      attrs.气运 = validateNumber(attrs.气运, 0, 999, 5);
+      attrs.魅力 = validateNumber(attrs.魅力, 0, 999, 5);
+      attrs.心性 = validateNumber(attrs.心性, 0, 999, 5);
     }
     if (!repaired.角色.身份.后天六司 || typeof repaired.角色.身份.后天六司 !== 'object') {
       repaired.角色.身份.后天六司 = { 根骨: 0, 灵性: 0, 悟性: 0, 气运: 0, 魅力: 0, 心性: 0 };

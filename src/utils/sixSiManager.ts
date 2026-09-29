@@ -35,8 +35,8 @@ export interface InternalSixSiConstraints {
 /** 六司约束配置 */
 export const SIX_SI_CONSTRAINTS: InternalSixSiConstraints = {
   先天六司: {
-    每项上限: 10,
-    总分上限: 60,
+    每项上限: 999,
+    总分上限: 5994,
     对加成权重: 0.7,
   },
   后天六司: {
